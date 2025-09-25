@@ -202,9 +202,9 @@ class Pm2Importer:
                             mat.surface_render_method = "BLENDED"
                     if hasattr(mat, "blend_method"):  # Blender 4.1 and earlier
                         mat.blend_method = blend_method
-                    if hasattr(mat, "use_transparency_overlap"):
+                    if hasattr(mat, "use_transparency_overlap"):  # Blender 4.2+
                         mat.use_transparency_overlap = False
-                    else:
+                    if hasattr(mat, "show_transparent_back"):  # Blender 4.1 and earlier
                         mat.show_transparent_back = False
 
                     # set up material nodes
