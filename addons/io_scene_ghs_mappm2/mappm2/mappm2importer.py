@@ -24,7 +24,7 @@ class MapPm2Importer:
         self.bl_name = bl_name
         self._vcol_materials = vcol_materials
         self._import_vcol_alpha = import_vcol_alpha
-        self._matsettings_materials_to_reuse: dict[MatSettings, Material] = dict()
+        self._matsettings_materials_to_reuse = None  # dict() to reuse materials
 
     def import_mappm2(self):
         with open(self.mappm2path, "rb") as file:

@@ -122,7 +122,7 @@ class GhsImporter:
         self.anim_method = anim_method
         self._vcol_materials = vcol_materials
         self._import_vcol_alpha = import_vcol_alpha
-        self._matsettings_materials_to_reuse: dict[MatSettings, Material] = dict()
+        self._matsettings_materials_to_reuse = None  # dict() to reuse materials
 
     def import_stuff(self):
         # load ghs data and MeshPosRots
