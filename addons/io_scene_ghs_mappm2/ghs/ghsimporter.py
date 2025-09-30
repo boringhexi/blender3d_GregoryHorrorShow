@@ -90,6 +90,7 @@ class GhsImporter:
         texdir,
         bl_name="",
         anim_method="1LONG",
+        bone_parenting=True,
         vcol_materials=True,
         import_vcol_alpha=True,
     ):
@@ -103,6 +104,9 @@ class GhsImporter:
         of 100 frames), "DRIVER" (separate animations, uses a driver bone to drive shape
         keys), or "TPOSE" (attempts to create a T-pose from the first animation)
         :param bl_name:
+        :param bone_parenting: if True, parent meshes directly to armature bones. if
+        False, weigh entire meshes to armature bones using vertex groups instead. Some
+        exporters can't preserve the former, so the latter is a workaround.
         :param vcol_materials: if True, setup vertex color materials
         :param import_vcol_alpha: if True, import vertex color alpha
         """
@@ -120,6 +124,7 @@ class GhsImporter:
         ):
             raise ValueError(f"Unknown anim_method {anim_method!r}")
         self.anim_method = anim_method
+        self._bone_parenting = bone_parenting
         self._vcol_materials = vcol_materials
         self._import_vcol_alpha = import_vcol_alpha
         self._matsettings_materials_to_reuse = None  # dict() to reuse materials
@@ -219,17 +224,22 @@ class GhsImporter:
                 scalehide_editbone.parent = parent_editbone
                 scalehide_bonename = scalehide_editbone.name
                 pm2idx_to_scalehidebone[pm2idx] = scalehide_bonename
-                # Skinning, weigh entire mesh to the scalehide bone.
-                # (Bone parenting could work, except several exporters choke on that)
                 bpy.ops.object.mode_set(mode="POSE")
                 pm2meshobj.parent = armobj
-                arm_modifier = pm2meshobj.modifiers.new("Armature", "ARMATURE")
-                arm_modifier.object = armobj
-                num_verts = len(pm2meshobj.data.vertices)
-                pm2meshobj.vertex_groups.new(name=scalehide_bonename)
-                pm2meshobj.vertex_groups[scalehide_bonename].add(
-                    range(num_verts), 1, "ADD"
-                )
+                if self._bone_parenting:
+                    # parent mesh to bone. (some exporters can't export this accurately)
+                    pm2meshobj.parent_type = "BONE"
+                    pm2meshobj.parent_bone = scalehide_bonename
+                    pm2meshobj.location[1] = -1
+                else:
+                    # Skinning, weigh entire mesh to the scalehide bone.
+                    arm_modifier = pm2meshobj.modifiers.new("Armature", "ARMATURE")
+                    arm_modifier.object = armobj
+                    num_verts = len(pm2meshobj.data.vertices)
+                    pm2meshobj.vertex_groups.new(name=scalehide_bonename)
+                    pm2meshobj.vertex_groups[scalehide_bonename].add(
+                        range(num_verts), 1, "ADD"
+                    )
                 # update important bone mappings
                 boneidx_to_default_scalehide_bonename[boneidx] = scalehide_bonename
                 default_scalehide_bonename_to_pm2mesh[scalehide_bonename] = (
@@ -241,19 +251,23 @@ class GhsImporter:
                     scalehide_bonename
                 )
             else:
-                # don't weigh to a scalehide bone, weigh directly to the boneidx bone
+                # parent/weigh directly to the boneidx bone instead of to scalehide bone
                 bpy.ops.object.mode_set(mode="POSE")
                 boneidx_bonename = boneidx_to_bonename[boneidx]
-                # skinning, weigh entire mesh to the boneidx bone
-                pm2meshobj.parent = armobj
-                arm_modifier = pm2meshobj.modifiers.new("Armature", "ARMATURE")
-                arm_modifier.object = armobj
-                num_verts = len(pm2meshobj.data.vertices)
-                if boneidx_bonename not in pm2meshobj.vertex_groups:
-                    pm2meshobj.vertex_groups.new(name=boneidx_bonename)
-                pm2meshobj.vertex_groups[boneidx_bonename].add(
-                    range(num_verts), 1, "ADD"
-                )
+                if self._bone_parenting:
+                    pm2meshobj.parent_type = "BONE"
+                    pm2meshobj.parent_bone = boneidx_bonename
+                    pm2meshobj.location[1] = -1
+                else:
+                    pm2meshobj.parent = armobj
+                    arm_modifier = pm2meshobj.modifiers.new("Armature", "ARMATURE")
+                    arm_modifier.object = armobj
+                    num_verts = len(pm2meshobj.data.vertices)
+                    if boneidx_bonename not in pm2meshobj.vertex_groups:
+                        pm2meshobj.vertex_groups.new(name=boneidx_bonename)
+                    pm2meshobj.vertex_groups[boneidx_bonename].add(
+                        range(num_verts), 1, "ADD"
+                    )
         bpy.ops.object.mode_set(mode="OBJECT")
 
         # get each anim's full length in advance by checking its mpr and keyframes.
@@ -614,18 +628,23 @@ class GhsImporter:
                             pm2importer.import_scene()
                             pm2meshobj = pm2importer.bl_meshobj
 
-                            # skinning once again, weigh entire mesh to scalehide bone
+                            # once again, parent/weigh to scalehide bone
                             # bpy.ops.object.mode_set(mode="POSE")  # already Pose mode
                             pm2meshobj.parent = armobj
-                            arm_modifier = pm2meshobj.modifiers.new(
-                                "Armature", "ARMATURE"
-                            )
-                            arm_modifier.object = armobj
-                            num_verts = len(pm2meshobj.data.vertices)
-                            pm2meshobj.vertex_groups.new(name=scalehide_bonename)
-                            pm2meshobj.vertex_groups[scalehide_bonename].add(
-                                range(num_verts), 1, "ADD"
-                            )
+                            if self._bone_parenting:
+                                pm2meshobj.parent_type = "BONE"
+                                pm2meshobj.parent_bone = scalehide_bonename
+                                pm2meshobj.location[1] = -1
+                            else:
+                                arm_modifier = pm2meshobj.modifiers.new(
+                                    "Armature", "ARMATURE"
+                                )
+                                arm_modifier.object = armobj
+                                num_verts = len(pm2meshobj.data.vertices)
+                                pm2meshobj.vertex_groups.new(name=scalehide_bonename)
+                                pm2meshobj.vertex_groups[scalehide_bonename].add(
+                                    range(num_verts), 1, "ADD"
+                                )
                             # update important mesh mapping
                             pm2idx_to_meshobj[pm2idx] = pm2meshobj
 

@@ -15,6 +15,7 @@ def load_ghs_mappm2(
     files=None,
     bl_name_override="",
     ghs_anim_method="DRIVER",
+    armature_parenting_workaround=False,
     pm2_texdir="",
     vcol_materials=True,
     vcol_alpha="AUTO",
@@ -43,6 +44,7 @@ def load_ghs_mappm2(
                 texdir,
                 bl_name,
                 anim_method=ghs_anim_method,
+                bone_parenting=not armature_parenting_workaround,
                 vcol_materials=vcol_materials,
                 import_vcol_alpha=import_vcol_alpha,
             )

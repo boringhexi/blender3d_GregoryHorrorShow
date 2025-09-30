@@ -96,6 +96,14 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         default="DRIVER",
     )
 
+    armature_parenting_workaround: BoolProperty(
+        name="Armature parenting workaround",
+        description="Usually meshes will be parented directly to armature bones, but "
+        "some exporters don't support this. So enable this option to use an armature "
+        "modifier and vertex groups instead",
+        default=False,
+    )
+
     pm2_texdir: StringProperty(
         name="PM2 texture directory",
         description="When importing standalone PM2 files, load textures from this "
@@ -150,6 +158,7 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         header.label(text="Advanced")
         if body is not None:
             body.prop(self, "bl_name_override")
+            body.prop(self, "armature_parenting_workaround")
             body.prop(self, "pm2_texdir")
 
     def execute(self, context):
