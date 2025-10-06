@@ -254,12 +254,12 @@ class GhsImporter:
                 # parent/weigh directly to the boneidx bone instead of to scalehide bone
                 bpy.ops.object.mode_set(mode="POSE")
                 boneidx_bonename = boneidx_to_bonename[boneidx]
+                pm2meshobj.parent = armobj
                 if self._bone_parenting:
                     pm2meshobj.parent_type = "BONE"
                     pm2meshobj.parent_bone = boneidx_bonename
                     pm2meshobj.location[1] = -1
                 else:
-                    pm2meshobj.parent = armobj
                     arm_modifier = pm2meshobj.modifiers.new("Armature", "ARMATURE")
                     arm_modifier.object = armobj
                     num_verts = len(pm2meshobj.data.vertices)
