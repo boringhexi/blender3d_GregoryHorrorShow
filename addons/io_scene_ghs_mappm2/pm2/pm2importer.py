@@ -196,17 +196,28 @@ class Pm2Importer:
 
                     # set some material settings
                     mat.use_backface_culling = not doublesided
-                    if hasattr(mat, "surface_render_method"):  # Blender 4.2+
-                        if blend_method in ("OPAQUE", "CLIP"):
-                            mat.surface_render_method = "DITHERED"
-                        else:
-                            mat.surface_render_method = "BLENDED"
                     if hasattr(mat, "blend_method"):  # Blender 4.1 and earlier
                         mat.blend_method = blend_method
-                    if hasattr(mat, "use_transparency_overlap"):  # Blender 4.2+
-                        mat.use_transparency_overlap = False
+                    if hasattr(mat, "surface_render_method"):  # Blender 4.2+
+                        if (
+                                hasattr(mat, "use_transparency_overlap")
+                                and self._tex_oldexporters_compat
+                        ):
+                            # that is to say, if we'd need to reimplement alpha clip but
+                            # can't cause we'd rather maintain texture compatibility
+                            # with old exporters...
+                            # ... then just use regular alpha instead alpha clip
+                            mat.surface_render_method = (
+                                "DITHERED" if blend_method == "OPAQUE" else "BLENDED"
+                            )
+                        else:
+                            mat.surface_render_method = (
+                                "BLENDED" if blend_method == "BLEND" else "DITHERED"
+                            )
                     if hasattr(mat, "show_transparent_back"):  # Blender 4.1 and earlier
                         mat.show_transparent_back = False
+                    if hasattr(mat, "use_transparency_overlap"):  # Blender 4.2+
+                        mat.use_transparency_overlap = False
 
                     # set up material nodes
                     teximage = self._texoffsets_to_images.get(primlist_texoffset_trunc)
