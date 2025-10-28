@@ -151,7 +151,6 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         layout.use_property_decorate = False  # No animation.
 
         layout.prop(self, "ghs_anim_method")
-        layout.prop(self, "vcol_materials")
         layout.prop(self, "vcol_alpha")
 
         header, body = layout.panel("GHSMAPPM2_import_advanced", default_closed=True)
