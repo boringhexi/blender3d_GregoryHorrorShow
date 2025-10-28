@@ -111,11 +111,11 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         default="",
     )
 
-    vcol_materials: BoolProperty(
-        name="Vertex color materials",
-        description="Makes vertex colors visible via material node setup. "
-        "(Some formats may not export textures properly with this enabled)",
-        default=True,
+    tex_oldexporters_compat: BoolProperty(
+        name="Old exporter texture compatibility",
+        description="Allow textures to be detected and exported by some older exporters"
+        " (e.g. Collada)",
+        default=False,
     )
 
     vcol_alpha: EnumProperty(
@@ -159,6 +159,7 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         if body is not None:
             body.prop(self, "bl_name_override")
             body.prop(self, "armature_parenting_workaround")
+            body.prop(self, "tex_oldexporters_compat")
             body.prop(self, "pm2_texdir")
 
     def execute(self, context):

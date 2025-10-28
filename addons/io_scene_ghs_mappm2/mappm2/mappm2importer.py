@@ -10,19 +10,25 @@ from .mappm2container import MapPm2Container
 
 class MapPm2Importer:
     def __init__(
-        self, mappm2path, texdir, bl_name="", vcol_materials=True, import_vcol_alpha=True
+        self,
+        mappm2path,
+        texdir,
+        bl_name="",
+        tex_oldexporters_compat=False,
+        import_vcol_alpha=True,
     ):
         """
 
         :param mappm2path:
         :param bl_name:
-        :param vcol_materials: if True, setup vertex color materials
+        :param tex_oldexporters_compat: if True, connect texture nodes directly to
+            PBsdf, no vertex color or alpha clipping nodes
         :param import_vcol_alpha: if True, import vertex color alpha
         """
         self.mappm2path = Path(mappm2path)
         self.texdir = texdir
         self.bl_name = bl_name
-        self._vcol_materials = vcol_materials
+        self._tex_oldexporters_compat = tex_oldexporters_compat
         self._import_vcol_alpha = import_vcol_alpha
         self._matsettings_materials_to_reuse = None  # dict() to reuse materials
 
@@ -37,7 +43,7 @@ class MapPm2Importer:
                 pm2model,
                 bl_name=f"{self.bl_name}{i:03}",
                 texdir=self.texdir,
-                vcol_materials=self._vcol_materials,
+                tex_oldexporters_compat=self._tex_oldexporters_compat,
                 import_vcol_alpha=self._import_vcol_alpha,
                 matsettings_materials_to_reuse=self._matsettings_materials_to_reuse,
             )

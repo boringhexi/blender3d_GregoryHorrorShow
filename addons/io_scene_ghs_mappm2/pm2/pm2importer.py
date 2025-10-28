@@ -27,7 +27,7 @@ class Pm2Importer:
         pm2model: Pm2Model,
         bl_name: str = "",
         texdir: Union[str, PathLike[str], None] = None,
-        vcol_materials=True,
+        tex_oldexporters_compat=False,
         import_vcol_alpha=True,
         matsettings_materials_to_reuse: Optional[dict[MatSettings, Material]] = None,
     ):
@@ -40,7 +40,8 @@ class Pm2Importer:
         :param bl_name: what to name this mesh in Blender. Also used to name materials
         :param texdir: if provided, path to directory containing textures to load. An
             empty string has the same effect as None, i.e. will not load textures.
-        :param vcol_materials: if True, include vertex colors in the materials
+        :param tex_oldexporters_compat: if True, connect texture nodes directly to
+            PBsdf, no vertex color or alpha clipping nodes
         :param import_vcol_alpha: if True, import vertex color alpha
         :param matsettings_materials_to_reuse: if provided, a mapping of MatSettings to
             Blender materials. The import process will reuse an existing material if
@@ -51,7 +52,7 @@ class Pm2Importer:
         self.bl_name = bl_name
         self._texdir = Path(texdir) if texdir else None
         self._matsettings_materials_to_reuse = matsettings_materials_to_reuse
-        self._vcol_materials = vcol_materials
+        self._tex_oldexporters_compat = tex_oldexporters_compat
         self._import_vcol_alpha = import_vcol_alpha
 
         self._bpycollection = bpy.context.collection
@@ -213,7 +214,7 @@ class Pm2Importer:
                         mat,
                         blend_method,
                         teximage,
-                        self._vcol_materials,
+                        self._tex_oldexporters_compat,
                         self._import_vcol_alpha,
                     )
 
@@ -297,7 +298,7 @@ def find_enabled_socket(sockets, name):
 
 
 def setup_material_nodes(
-    mat: Material, blend_method, teximage, vcol_materials, import_vcol_alpha
+    mat: Material, blend_method, teximage, tex_oldexporters_compat, import_vcol_alpha
 ):
     mat.use_nodes = True
     pbsdfnode = find_principled_bsdf_node(mat)
@@ -307,7 +308,7 @@ def setup_material_nodes(
     teximgnode = mat.node_tree.nodes.new("ShaderNodeTexImage")
     teximgnode.image = teximage
 
-    if not vcol_materials:
+    if tex_oldexporters_compat:
         # place Image Texture node to left of Principled BSDF node & connect them
         teximgnode.location = pbsdf_x - 290, pbsdf_y
         mat.node_tree.links.new(
