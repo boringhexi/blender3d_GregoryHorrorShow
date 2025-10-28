@@ -2,7 +2,7 @@
 GregoryHorrorShow-Blender-IO is an addon for Blender that imports models from the game Gregory Horror Show for PlayStation 2.
 - Supported file types are .ghs, .map-pm2, and .pm2. These must first be extracted from the game using [ghs-tools](https://github.com/boringhexi/ghs-tools) (see [Usage](#Usage) below).
 - Supported features: meshes, textures/materials, animations (armature, shape key), vertex colors
-- Blender version compatibililty: 3.0.0 and up (tested with 3.0.0, 4.4.0 alpha)
+- Blender version compatibililty: probably 3.4.1 and up (tested with 3.4.1, 4.5.3)
 
 ## Installation
 ### Blender 4.0.0+
