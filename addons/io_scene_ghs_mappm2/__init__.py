@@ -111,10 +111,10 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         default="",
     )
 
-    tex_oldexporters_compat: BoolProperty(
-        name="Old exporter texture compatibility",
-        description="Allow textures to be detected and exported by some older exporters"
-        " (e.g. Collada)",
+    oldexporter_compat: BoolProperty(
+        name="Old exporter compatibility",
+        description="Allow textures and vertex colors to be detected and exported by "
+        "some older exporters (e.g. Collada)",
         default=False,
     )
 
@@ -158,7 +158,7 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
         if body is not None:
             body.prop(self, "bl_name_override")
             body.prop(self, "armature_parenting_workaround")
-            body.prop(self, "tex_oldexporters_compat")
+            body.prop(self, "oldexporter_compat")
             body.prop(self, "pm2_texdir")
 
     def execute(self, context):

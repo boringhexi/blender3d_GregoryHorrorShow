@@ -91,7 +91,7 @@ class GhsImporter:
         bl_name="",
         anim_method="1LONG",
         bone_parenting=True,
-        tex_oldexporters_compat=False,
+        oldexporter_compat=False,
         import_vcol_alpha=True,
     ):
         """
@@ -107,7 +107,7 @@ class GhsImporter:
         :param bone_parenting: if True, parent meshes directly to armature bones. if
         False, weigh entire meshes to armature bones using vertex groups instead. Some
         exporters can't preserve the former, so the latter is a workaround.
-        :param tex_oldexporters_compat: if True, connect texture nodes directly to
+        :param oldexporter_compat: if True, connect texture nodes directly to
             PBsdf, no vertex color or alpha clipping nodes
         :param import_vcol_alpha: if True, import vertex color alpha
         """
@@ -126,7 +126,7 @@ class GhsImporter:
             raise ValueError(f"Unknown anim_method {anim_method!r}")
         self.anim_method = anim_method
         self._bone_parenting = bone_parenting
-        self._tex_oldexporters_compat = tex_oldexporters_compat
+        self._oldexporter_compat = oldexporter_compat
         self._import_vcol_alpha = import_vcol_alpha
         self._matsettings_materials_to_reuse = None  # dict() to reuse materials
 
@@ -205,7 +205,7 @@ class GhsImporter:
                 pm2model,
                 bl_name=f"{self.bl_name}_p{pm2idx:02x}",
                 texdir=self.texdir,
-                tex_oldexporters_compat=self._tex_oldexporters_compat,
+                oldexporter_compat=self._oldexporter_compat,
                 import_vcol_alpha=self._import_vcol_alpha,
                 matsettings_materials_to_reuse=self._matsettings_materials_to_reuse,
             )
@@ -622,7 +622,7 @@ class GhsImporter:
                                 pm2model,
                                 bl_name=pm2name,
                                 texdir=self.texdir,
-                                tex_oldexporters_compat=self._tex_oldexporters_compat,
+                                oldexporter_compat=self._oldexporter_compat,
                                 import_vcol_alpha=self._import_vcol_alpha,
                                 matsettings_materials_to_reuse=self._matsettings_materials_to_reuse,
                             )

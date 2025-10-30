@@ -14,21 +14,21 @@ class MapPm2Importer:
         mappm2path,
         texdir,
         bl_name="",
-        tex_oldexporters_compat=False,
+        oldexporter_compat=False,
         import_vcol_alpha=True,
     ):
         """
 
         :param mappm2path:
         :param bl_name:
-        :param tex_oldexporters_compat: if True, connect texture nodes directly to
+        :param oldexporter_compat: if True, connect texture nodes directly to
             PBsdf, no vertex color or alpha clipping nodes
         :param import_vcol_alpha: if True, import vertex color alpha
         """
         self.mappm2path = Path(mappm2path)
         self.texdir = texdir
         self.bl_name = bl_name
-        self._tex_oldexporters_compat = tex_oldexporters_compat
+        self._oldexporter_compat = oldexporter_compat
         self._import_vcol_alpha = import_vcol_alpha
         self._matsettings_materials_to_reuse = None  # dict() to reuse materials
 
@@ -43,7 +43,7 @@ class MapPm2Importer:
                 pm2model,
                 bl_name=f"{self.bl_name}{i:03}",
                 texdir=self.texdir,
-                tex_oldexporters_compat=self._tex_oldexporters_compat,
+                oldexporter_compat=self._oldexporter_compat,
                 import_vcol_alpha=self._import_vcol_alpha,
                 matsettings_materials_to_reuse=self._matsettings_materials_to_reuse,
             )

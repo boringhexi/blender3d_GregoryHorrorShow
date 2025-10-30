@@ -27,7 +27,7 @@ class Pm2Importer:
         pm2model: Pm2Model,
         bl_name: str = "",
         texdir: Union[str, PathLike[str], None] = None,
-        tex_oldexporters_compat=False,
+        oldexporter_compat=False,
         import_vcol_alpha=True,
         matsettings_materials_to_reuse: Optional[dict[MatSettings, Material]] = None,
     ):
@@ -40,7 +40,7 @@ class Pm2Importer:
         :param bl_name: what to name this mesh in Blender. Also used to name materials
         :param texdir: if provided, path to directory containing textures to load. An
             empty string has the same effect as None, i.e. will not load textures.
-        :param tex_oldexporters_compat: if True, connect texture nodes directly to
+        :param oldexporter_compat: if True, connect texture nodes directly to
             PBsdf, no vertex color or alpha clipping nodes
         :param import_vcol_alpha: if True, import vertex color alpha
         :param matsettings_materials_to_reuse: if provided, a mapping of MatSettings to
@@ -52,7 +52,7 @@ class Pm2Importer:
         self.bl_name = bl_name
         self._texdir = Path(texdir) if texdir else None
         self._matsettings_materials_to_reuse = matsettings_materials_to_reuse
-        self._tex_oldexporters_compat = tex_oldexporters_compat
+        self._oldexporter_compat = oldexporter_compat
         self._import_vcol_alpha = import_vcol_alpha
 
         self._bpycollection = bpy.context.collection
@@ -111,11 +111,17 @@ class Pm2Importer:
             for prim in primlist:
                 colors.extend(prim.colors)
         if not self._import_vcol_alpha:
-            colors = ((r, g, b, 1) for r, g, b, a in colors)
+            colors = [(r, g, b, 1) for r, g, b, a in colors]
 
         if hasattr(me, "color_attributes"):
-            color_attribute = me.color_attributes.new("", "FLOAT_COLOR", "POINT")
-            color_attribute.data.foreach_set("color", unpack_list(colors))
+            if self._oldexporter_compat:
+                color_attribute = me.color_attributes.new("", "BYTE_COLOR", "CORNER")
+                loop_vcolors = (colors[lo.vertex_index] for lo in me.loops)
+                color_attribute.data.foreach_set("color", unpack_list(loop_vcolors))
+
+            else:
+                color_attribute = me.color_attributes.new("", "FLOAT_COLOR", "POINT")
+                color_attribute.data.foreach_set("color", unpack_list(colors))
         elif hasattr(me, "vertex_colors"):  # Blender 3.0-3.1 compatibility
             color_layer = me.vertex_colors.new()
             loop_vcolors = (colors[lo.vertex_index] for lo in me.loops)
@@ -200,8 +206,8 @@ class Pm2Importer:
                         mat.blend_method = blend_method
                     if hasattr(mat, "surface_render_method"):  # Blender 4.2+
                         if (
-                                hasattr(mat, "use_transparency_overlap")
-                                and self._tex_oldexporters_compat
+                            hasattr(mat, "use_transparency_overlap")
+                            and self._oldexporter_compat
                         ):
                             # that is to say, if we'd need to reimplement alpha clip but
                             # can't cause we'd rather maintain texture compatibility
@@ -225,7 +231,7 @@ class Pm2Importer:
                         mat,
                         blend_method,
                         teximage,
-                        self._tex_oldexporters_compat,
+                        self._oldexporter_compat,
                         self._import_vcol_alpha,
                     )
 
@@ -309,7 +315,7 @@ def find_enabled_socket(sockets, name):
 
 
 def setup_material_nodes(
-    mat: Material, blend_method, teximage, tex_oldexporters_compat, import_vcol_alpha
+    mat: Material, blend_method, teximage, oldexporter_compat, import_vcol_alpha
 ):
     mat.use_nodes = True
     pbsdfnode = find_principled_bsdf_node(mat)
@@ -319,7 +325,7 @@ def setup_material_nodes(
     teximgnode = mat.node_tree.nodes.new("ShaderNodeTexImage")
     teximgnode.image = teximage
 
-    if tex_oldexporters_compat:
+    if oldexporter_compat:
         # place Image Texture node to left of Principled BSDF node & connect them
         teximgnode.location = pbsdf_x - 290, pbsdf_y
         mat.node_tree.links.new(

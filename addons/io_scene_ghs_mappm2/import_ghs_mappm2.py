@@ -17,7 +17,7 @@ def load_ghs_mappm2(
     ghs_anim_method="DRIVER",
     armature_parenting_workaround=False,
     pm2_texdir="",
-    tex_oldexporters_compat=False,
+    oldexporter_compat=False,
     vcol_alpha="AUTO",
 ):
     if files:
@@ -45,7 +45,7 @@ def load_ghs_mappm2(
                 bl_name,
                 anim_method=ghs_anim_method,
                 bone_parenting=not armature_parenting_workaround,
-                tex_oldexporters_compat=tex_oldexporters_compat,
+                oldexporter_compat=oldexporter_compat,
                 import_vcol_alpha=import_vcol_alpha,
             )
             ghsimporter.import_stuff()
@@ -59,7 +59,7 @@ def load_ghs_mappm2(
                 inpath,
                 texdir,
                 bl_name,
-                tex_oldexporters_compat=tex_oldexporters_compat,
+                oldexporter_compat=oldexporter_compat,
                 import_vcol_alpha=import_vcol_alpha,
             )
             mappm2importer.import_mappm2()
@@ -72,7 +72,7 @@ def load_ghs_mappm2(
                 pm2model,
                 bl_name=bl_name,
                 texdir=pm2_texdir,
-                tex_oldexporters_compat=tex_oldexporters_compat,
+                oldexporter_compat=oldexporter_compat,
                 import_vcol_alpha=import_vcol_alpha,
             )
             pm2importer.import_scene()
