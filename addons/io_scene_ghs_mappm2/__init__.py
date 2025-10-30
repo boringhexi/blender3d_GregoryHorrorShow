@@ -6,7 +6,7 @@ bl_info = {
     "name": "Import Gregory Horror Show",
     "author": "boringhexi",
     "version": (0, 2, 1),
-    "blender": (3, 0, 0),
+    "blender": (3, 4, 1),
     "location": "File > Import",
     "description": "Import GHS/MAP-PM2/PM2 files from Gregory Horror Show (PS2)",
     "warning": "",

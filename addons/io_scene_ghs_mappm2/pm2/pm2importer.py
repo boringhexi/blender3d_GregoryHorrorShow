@@ -113,24 +113,14 @@ class Pm2Importer:
         if not self._import_vcol_alpha:
             colors = [(r, g, b, 1) for r, g, b, a in colors]
 
-        if hasattr(me, "color_attributes"):
-            if self._oldexporter_compat:
-                color_attribute = me.color_attributes.new("", "BYTE_COLOR", "CORNER")
-                loop_vcolors = (colors[lo.vertex_index] for lo in me.loops)
-                color_attribute.data.foreach_set("color", unpack_list(loop_vcolors))
-
-            else:
-                color_attribute = me.color_attributes.new("", "FLOAT_COLOR", "POINT")
-                color_attribute.data.foreach_set("color", unpack_list(colors))
-        elif hasattr(me, "vertex_colors"):  # Blender 3.0-3.1 compatibility
-            color_layer = me.vertex_colors.new()
+        if self._oldexporter_compat:
+            color_attribute = me.color_attributes.new("", "BYTE_COLOR", "CORNER")
             loop_vcolors = (colors[lo.vertex_index] for lo in me.loops)
-            color_layer.data.foreach_set("color", unpack_list(loop_vcolors))
+            color_attribute.data.foreach_set("color", unpack_list(loop_vcolors))
+
         else:
-            raise AttributeError(
-                "Mesh data has neither `color_attributes` nor `vertex_colors`, "
-                "can't set vertex colors"
-            )
+            color_attribute = me.color_attributes.new("", "FLOAT_COLOR", "POINT")
+            color_attribute.data.foreach_set("color", unpack_list(colors))
 
         # link mesh to Blender scene
         ob = bpy.data.objects.new(me.name, me)

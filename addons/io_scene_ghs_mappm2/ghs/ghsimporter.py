@@ -1069,11 +1069,7 @@ def timeline_into_fcurve(timeline: list[tuple[int, float]], fcurve: FCurve) -> N
     """
     num_keyframes = len(timeline)
     seq = list(chain.from_iterable(timeline))
-    if hasattr(fcurve.keyframe_points, "clear"):
-        fcurve.keyframe_points.clear()
-    else:  # Blender 3.0-3.2 compatibility
-        for kfp in reversed(fcurve.keyframe_points.values()):
-            fcurve.keyframe_points.remove(kfp, fast=True)
+    fcurve.keyframe_points.clear()
     fcurve.keyframe_points.add(count=num_keyframes)
     fcurve.keyframe_points.foreach_set("co", seq)
 
