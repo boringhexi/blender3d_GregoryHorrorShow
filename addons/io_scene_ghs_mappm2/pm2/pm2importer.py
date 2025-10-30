@@ -114,12 +114,12 @@ class Pm2Importer:
             colors = [(r, g, b, 1) for r, g, b, a in colors]
 
         if self._oldexporter_compat:
-            color_attribute = me.color_attributes.new("", "BYTE_COLOR", "CORNER")
+            color_attribute = me.color_attributes.new("Col", "BYTE_COLOR", "CORNER")
             loop_vcolors = (colors[lo.vertex_index] for lo in me.loops)
             color_attribute.data.foreach_set("color", unpack_list(loop_vcolors))
 
         else:
-            color_attribute = me.color_attributes.new("", "FLOAT_COLOR", "POINT")
+            color_attribute = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
             color_attribute.data.foreach_set("color", unpack_list(colors))
 
         # link mesh to Blender scene
