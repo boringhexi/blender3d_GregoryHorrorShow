@@ -102,7 +102,8 @@ class GhsImporter:
         :param anim_method: one of str: "1LONG" (all in a single timeline animation),
         "1LONG_EVERY100" (single timeline animation, each animation begins on a multiple
         of 100 frames), "DRIVER" (separate animations, uses a driver bone to drive shape
-        keys), or "TPOSE" (attempts to create a T-pose from the first animation)
+        keys), "TPOSE" (attempts to create a T-pose from the first animation), or "NONE"
+        (rest pose taken from first anim if any)
         :param bl_name:
         :param bone_parenting: if True, parent meshes directly to armature bones. if
         False, weigh entire meshes to armature bones using vertex groups instead. Some
@@ -122,6 +123,7 @@ class GhsImporter:
             "1LONG",
             "1LONG_EVERY100",
             "TPOSE",
+            "NONE"
         ):
             raise ValueError(f"Unknown anim_method {anim_method!r}")
         self.anim_method = anim_method
@@ -212,7 +214,7 @@ class GhsImporter:
             pm2importer.import_scene()
             pm2meshobj = pm2importer.bl_meshobj
 
-            if self.anim_method != "TPOSE":
+            if self.anim_method not in ("TPOSE", "NONE"):
                 # create scalehide bone for this default body mesh
                 bpy.ops.object.mode_set(mode="EDIT")
                 scalehide_editbone = armobj.data.edit_bones.new(
@@ -307,7 +309,7 @@ class GhsImporter:
                     shape_keys.animation_data.action = None
             animated_shapekeys = set()
 
-            if self.anim_method == "TPOSE":
+            if self.anim_method in ("TPOSE", "NONE"):
                 # pose armature using 1st frame of 1st mpr
                 bpy.ops.object.mode_set(mode="POSE")
                 for boneidx, boneposedata in mpr.items():
@@ -321,7 +323,10 @@ class GhsImporter:
                         pos_raw = boneposedata["pos"][frame]
                         pos = Vector(pos_raw)
                         bpyposebone.location = pos
-                        # For our approximated T-pose, no rest pose rotation
+                        if self.anim_method == "NONE":
+                            rot_raw = boneposedata["rot"][frame]
+                            rot = Vector(rot_raw)
+                            bpyposebone.rotation_euler = rot
                         break
                 break
             else:
@@ -414,7 +419,7 @@ class GhsImporter:
                 )
 
             for boneidx, keyframes in enumerate(anim["animation_data"]):
-                if self.anim_method == "TPOSE":
+                if self.anim_method in ("TPOSE", "NONE"):
                     break
 
                 parent_bonename = boneidx_to_bonename[boneidx]

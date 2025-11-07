@@ -88,8 +88,14 @@ class ImportGHSMAPPM2(bpy.types.Operator, ImportHelper):
             (
                 "TPOSE",
                 "T-Pose approx",
-                "Approximates a good-enough T-Pose (by using only default model parts, "
-                "no animation, and no rest pose rotation)",
+                "No animation. Approximates a good-enough T-Pose (by using only "
+                "default model parts and no rest pose rotation)",
+            ),
+            (
+                "NONE",
+                "None",
+                "No animation. Only default body parts, and rest pose is taken from "
+                "the first frame of the first animation (if any)",
             ),
         ],
         description="How .ghs animations should be imported",
