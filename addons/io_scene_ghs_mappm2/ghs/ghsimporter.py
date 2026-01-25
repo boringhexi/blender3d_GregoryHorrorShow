@@ -296,6 +296,7 @@ class GhsImporter:
         made_copies = False
         next_anim_start_frame = 0
 
+        dummy_nla_arm = None  # used to help add NLA tracks in reverse order
         for animidx, (anim, mpr) in enumerate(zip(anims, mprs)):
             full_anim_len = fullanimlengths[animidx]
             is_last_animation = animidx + 1 == len(anims)
@@ -389,11 +390,15 @@ class GhsImporter:
                 self.anim_method in ("DRIVER", "GLTF")
                 and armobj.animation_data is not None
             ):
+                # (a dummy nla track is used to add the real tracks in reverse order)
+                if dummy_nla_arm is None:
+                    dummy_nla_arm = armobj.animation_data.nla_tracks.new()
+                # Get the armature Action...
                 bpyaction: Action = armobj.animation_data.action
                 anim_name = f"Anim{animidx:02}"
                 bpyaction.name = anim_name
-                # put this Action into a new NLA track/strip
-                bpy_nla_track = armobj.animation_data.nla_tracks.new()
+                # ...and put this Action into a new NLA track/strip
+                bpy_nla_track = armobj.animation_data.nla_tracks.new(prev=dummy_nla_arm)
                 bpy_nla_track.name = anim_name
                 bpy_nla_strip = bpy_nla_track.strips.new(anim_name, 0, bpyaction)
                 bpy_nla_strip.name = anim_name  # because it didn't stick the first time
@@ -813,13 +818,17 @@ class GhsImporter:
                     bpy_nla_track.lock = True
 
         if self.anim_method in ("DRIVER", "GLTF"):
+            # remove the empty dummy track before we start messing with NLA stuff
+            if dummy_nla_arm is not None:
+                armobj.animation_data.nla_tracks.remove(dummy_nla_arm)
+
             # scale to 0 all scalehide bones not in the current animation
             bpy.ops.object.mode_set(mode="POSE")
             all_actions = []
             if armobj.animation_data is not None:
-                for animidx, bpy_nla_track in enumerate(
-                    armobj.animation_data.nla_tracks
-                ):
+                # armature's nla tracks were added in reverse order
+                arm_nla_tracks_in_order = reversed(armobj.animation_data.nla_tracks)
+                for animidx, bpy_nla_track in enumerate(arm_nla_tracks_in_order):
                     bpy_nla_strip = bpy_nla_track.strips[0]
                     bpyaction = bpy_nla_strip.action
                     armobj.animation_data.action = bpyaction
