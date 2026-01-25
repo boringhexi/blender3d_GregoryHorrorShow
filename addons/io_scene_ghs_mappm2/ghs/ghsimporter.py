@@ -295,8 +295,9 @@ class GhsImporter:
         deleteme_bonenames = []
         made_copies = False
         next_anim_start_frame = 0
+        dummy_nla_arm = None  # to help add armature NLA tracks in reverse order
+        shapekeys_to_dummy_nla = dict()  # to help add shape_keys' NLA tracks in reverse
 
-        dummy_nla_arm = None  # used to help add NLA tracks in reverse order
         for animidx, (anim, mpr) in enumerate(zip(anims, mprs)):
             full_anim_len = fullanimlengths[animidx]
             is_last_animation = animidx + 1 == len(anims)
@@ -792,13 +793,18 @@ class GhsImporter:
             # by putting them in NLA tracks with the same name.
             if self.anim_method == "GLTF":
                 for shape_keys in animated_shapekeys:
+                    # (a dummy nla track is used to add the real tracks in reverse)
+                    dummy_nla_sks = shapekeys_to_dummy_nla.get(shape_keys)
+                    if dummy_nla_sks is None:
+                        dummy_nla_sks = shape_keys.animation_data.nla_tracks.new()
+                        shapekeys_to_dummy_nla[shape_keys] = dummy_nla_sks
+                    # Get the shape_keys Action...
                     skaction: Action = shape_keys.animation_data.action
                     if skaction is None:
                         continue
-
                     anim_name = f"Anim{animidx:02}"
-                    # put this Action into a new NLA track/strip
-                    bpy_nla_track = shape_keys.animation_data.nla_tracks.new()
+                    # ...and put this Action into a new NLA track/strip
+                    bpy_nla_track = shape_keys.animation_data.nla_tracks.new(prev=dummy_nla_sks)
                     bpy_nla_track.name = anim_name
                     bpy_nla_strip = bpy_nla_track.strips.new(anim_name, 0, skaction)
                     bpy_nla_strip.name = anim_name  # didn't stick the first time
@@ -821,6 +827,9 @@ class GhsImporter:
             # remove the empty dummy track before we start messing with NLA stuff
             if dummy_nla_arm is not None:
                 armobj.animation_data.nla_tracks.remove(dummy_nla_arm)
+            # (let's remove all the shapekeys' dummy tracks too while we're at it)
+            for shape_keys, dummy_nla_sks in shapekeys_to_dummy_nla.items():
+                shape_keys.animation_data.nla_tracks.remove(dummy_nla_sks)
 
             # scale to 0 all scalehide bones not in the current animation
             bpy.ops.object.mode_set(mode="POSE")
