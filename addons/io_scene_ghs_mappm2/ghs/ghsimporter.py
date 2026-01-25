@@ -7,7 +7,7 @@ from typing import Optional
 
 import bpy
 from bpy.types import Action, Armature, FCurve, Material, Mesh, Object
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Vector
 
 from ..pm2.pm2importer import MatSettings, Pm2Importer
 from ..pm2.pm2model import Pm2Model
@@ -154,6 +154,16 @@ class GhsImporter:
         bpy.context.view_layer.objects.active = armobj
         # rotate it to correct the axes
         armobj.rotation_euler = (radians(90), radians(180), 0)
+        # prevent issue when switching anims with official glTF addon's Animation UI
+        if hasattr(armobj, 'gltf2_animation_rest'):
+            # rest_matrix = Matrix.LocRotScale(None, armobj.rotation_euler, None)
+            # matrix below is more precise than the one above
+            rest_matrix = Matrix((
+                (-1, 0, 0, 0),
+                (0, 0, -1, 0),
+                (0, -1, 0, 0),
+                (0, 0, 0, 1)))
+            armobj.gltf2_animation_rest = rest_matrix
 
         # create bones, set bone properties, and populate a mapping for later...
         boneidx_to_bonename = dict()
@@ -408,6 +418,13 @@ class GhsImporter:
                 # way an animation only plays when it is starred/solo'd in the GUI
                 bpy_nla_track.mute = True
                 bpy_nla_track.lock = True
+                # make anims switchable with official glTF addon's Animation UI
+                # (if the Animation UI is enabled in the glTF addon's preferences)
+                if hasattr(bpy.data.scenes[0], "gltf2_animation_tracks"):
+                    gltf2_animation_tracks = bpy.data.scenes[0].gltf2_animation_tracks
+                    if anim_name not in [track.name for track in gltf2_animation_tracks]:
+                        gltf_anim_track = gltf2_animation_tracks.add()
+                        gltf_anim_track.name = anim_name
 
             this_anim_start_frame = next_anim_start_frame
             next_anim_start_frame = 0
